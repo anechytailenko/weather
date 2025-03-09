@@ -1,106 +1,147 @@
+using Controllers;
+using Services;
 using System.Text.Json;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<AlertService>();
+builder.Services.AddScoped<LocationService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+
+AlertController.AddApiRoute(app);
+LocationController.AddApiRoute(app);
+
+int lastWeatherId = 0;
+var weatherData = new List<WeatherData>();
+
 #region API
 
 app.MapGet("/", () => "Hello World!");
 
-// // GET /products
-app.MapGet("/products", () => { return Results.Ok(new[] { new Product { Name = "Product 1", Price = 100 }, new Product { Name = "Product 2", Price = 200 } }); });
-
-// GET /products?name=mouse
-// app.MapGet("/products", (string name) =>
-// {
-//     return Results.Ok($"Product {name}");
-// });
-
-// GET /products/1
-// app.MapGet("/products/{id}", (int id) => { return Results.Ok($"Product {id}"); });
-
-// GET /products/1
-app.MapGet("/products/{id:int}", (int id) =>
+// GET /weather
+app.MapGet("/weather", (HttpContext context) =>
 {
-    if (id == 1)
-        return Results.Ok(new Product { Name = "Laptop", Price = 1000 });
+    var query = context.Request.Query;
+    
+    int.TryParse(query["limit"], out var limit);
+    int.TryParse(query["offset"], out var offset);
 
-    return Results.NotFound();
+    if (limit == 0)
+    {
+        limit = weatherData.Count;
+    }
+    
+    return Results.Ok(weatherData.Skip(offset).Take(limit).ToArray());
 });
 
-// app.MapGet("/products/{name}", (string name) => { return Results.Ok($"Product {name}"); });
-
-// GET /products?name=mouse&price=100&dynamic=1&dynamic2=2
-// app.MapGet("/products", (HttpContext context) =>
-// {
-//     var query = context.Request.Query;
-//     var result = new StringBuilder();
-//
-//     foreach (var (key, value) in query)
-//     {
-//         result.AppendLine($"{key}: {value}");
-//     }
-//
-//     return Results.Ok(result.ToString());
-// });
-
-// POST /products
-app.MapPost("/products", (Product product) =>
+// GET /weather/1
+app.MapGet("/weather/{id:int}", (int id) =>
 {
-    // Save product to the database
-    return Results.Created("/products/1", product);
+    var record = weatherData.Find(x => x.Id == id);
+    if (record == null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(record);
 });
 
-// PUT /products/1
-app.MapPut("/products/{id}", (int id, Product product) =>
+// POST /weather
+app.MapPost("/weather", (WeatherData data) =>
 {
-    // Update product in the database
-    return Results.Ok(product);
+    lastWeatherId++;
+    var newId = lastWeatherId;
+    data.Id = newId;
+    weatherData.Add(data);
+    return Results.Created($"/weather/{newId}", data);
 });
 
-// PATCH /products/1
-app.MapPatch("/products/{id}", (int id, JsonElement patch) =>
+// PUT /weather/1
+app.MapPut("/weather/{id:int}", (int id, WeatherData data) =>
 {
-    // Apply patch to the product in the database
-    return Results.Ok(patch);
+    var record = weatherData.Find(x => x.Id == id);
+    if (record == null)
+    {
+        return Results.NotFound();
+    }
+    
+    record.LocationId = data.LocationId;
+    record.Temperature = data.Temperature;
+    record.Condition = data.Condition;
+    record.RecordedAt = data.RecordedAt;
+    
+    return Results.Ok(data);
+});
+
+// PATCH /weather/1
+app.MapPatch("/weather/{id:int}", (int id, JsonElement patch) =>
+{
+    var record = weatherData.Find(x => x.Id == id);
+    if (record == null)
+    {
+        return Results.NotFound();
+    }
+    
+    foreach (var field in patch.EnumerateObject())
+    {
+        switch (field.Name)
+        {
+            case "locationId":
+                record.LocationId = field.Value.GetInt32();
+                break;
+            case "temperature":
+                record.Temperature = field.Value.GetDouble();
+                break;
+            case "condition":
+                record.Condition = field.Value.GetString();
+                break;
+            case "recordedAt":
+                record.RecordedAt = field.Value.GetDateTime();
+                break;
+        }
+    }
+    
+    return Results.Ok(record);
 });
 
 // DELETE /products/1
-app.MapDelete("/products/{id}", (int id) =>
+app.MapDelete("/weather/{id:int}", (int id) =>
 {
-    // Delete product from the database
+    var record = weatherData.Find(x => x.Id == id);
+    if (record == null)
+    {
+        return Results.NotFound();
+    }
 
-    if (id == 1)
-        return Results.NoContent();
-
-    return Results.NotFound();
+    weatherData.Remove(record);
+    return Results.NoContent();
 });
 
 #endregion
 
 app.Run();
 
-
-class Product
-{
-    public string Name { get; set; }
-    public decimal Price { get; set; }
+public class WeatherData
+{ 
+    public int Id { get; set; }
+    public int LocationId { get; set; }
+    public double Temperature { get; set; }
+    public string Condition { get; set; }  
+    public DateTime RecordedAt { get; set; }
 }
 
-// need to set Program as public class
 public partial class Program
 {
 }
+
