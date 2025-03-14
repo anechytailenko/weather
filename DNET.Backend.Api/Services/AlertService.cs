@@ -1,24 +1,39 @@
-using Models;
+
 using DNET.Backend.Api.DB;
 using System.Text.Json;
-namespace Services
-{
-    public class AlertService()
-    {
+using DNET.Backend.Api.Models;
+using DNET.Backend.Api.Services.Interfaces;
+using Microsoft.Extensions.Options;
 
-        public IEnumerable<Alert> GetAllAlert() => DB.alertModel;
+namespace DNET.Backend.Api.Services
+{
+    public class AlertService: IAlertService
+    {
+        private readonly AlertServiceSettings _alertServiceSettings;
+        
+        public AlertService(IOptionsSnapshot<AlertServiceSettings> alertServiceSettings)
+        {
+            _alertServiceSettings = alertServiceSettings.Value;
+        }
+        
+        public IEnumerable<Alert> GetAllAlert() => Db.AlertModel;
        
         
         public Alert? GetAlertById(int id)
         {
-            return DB.alertModel.Find(alert => alert.Id == id);
+            return Db.AlertModel.Find(alert => alert.Id == id);
         } 
 
 
         public Alert Create(Alert alert)
         {
-            alert.Id = DB.alertModel.Max(a => a.Id) + 1;
-            DB.alertModel.Add(alert);
+            if (Db.AlertModel.Count() >= _alertServiceSettings.MaxAlerts)
+            {
+                return null; 
+            }
+            
+            alert.Id = Db.AlertModel.Max(a => a.Id) + 1;
+            Db.AlertModel.Add(alert);
             return alert;
         }
         
@@ -42,7 +57,7 @@ namespace Services
            
            if (existedAlert != null)
            {
-               DB.alertModel.Remove(existedAlert);
+               Db.AlertModel.Remove(existedAlert);
                return true; 
            }
            

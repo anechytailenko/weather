@@ -1,24 +1,40 @@
-using Models;
+
 using DNET.Backend.Api.DB;
 using System.Text.Json;
-namespace Services
-{
-    public class LocationService()
-    {
+using DNET.Backend.Api.Models;
+using DNET.Backend.Api.Services.Interfaces;
+using Microsoft.Extensions.Options;
 
-        public IEnumerable<Location> GetAllLocations() => DB.locationModel;
+namespace DNET.Backend.Api.Services
+{
+    public class LocationService: ILocationService
+    {
+        private readonly LocationServiceSettings _locationServiceSettings;
+        
+        public LocationService(IOptionsSnapshot<LocationServiceSettings> locationServiceSettings)
+        {
+            _locationServiceSettings = locationServiceSettings.Value;
+        }
+        
+        
+        public IEnumerable<Location> GetAllLocations() => Db.LocationModel;
        
         
         public Location? GetLocationById(int id)
         {
-            return DB.locationModel.Find(location => location.Id == id);
+            return Db.LocationModel.Find(location => location.Id == id);
         } 
 
 
         public Location Create(Location location)
         {
-            location.Id = DB.locationModel.Max(a => a.Id) + 1;
-            DB.locationModel.Add(location);
+            if (Db.LocationModel.Count() >= _locationServiceSettings.MaxLocations)
+            {
+                return null; 
+            }
+            
+            location.Id = Db.LocationModel.Max(a => a.Id) + 1;
+            Db.LocationModel.Add(location);
             return location;
         }
         
@@ -42,7 +58,7 @@ namespace Services
            
             if (existedLocation != null)
             {
-                DB.locationModel.Remove(existedLocation);
+                Db.LocationModel.Remove(existedLocation);
                 return true; 
             }
            

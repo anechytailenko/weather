@@ -1,11 +1,13 @@
+using DNET.Backend.Api.Models;
 using Models;
+
 
 namespace DNET.Backend.Api.DB
 {
 
-    public static class DB
+    public static class Db
     {
-        public static List<Location> locationModel { get; } = new()
+        public static List<Location> LocationModel { get; } = new()
         {
 
             new Location(1, "New York", "USA"),
@@ -20,7 +22,7 @@ namespace DNET.Backend.Api.DB
             new Location(10, "São Paulo", "Brazil")
         };
 
-        public static List<Alert> alertModel { get; } = new()
+        public static List<Alert> AlertModel { get; } = new()
         {
             new Alert(1, 1, "Fire hazard detected", DateTime.Now.AddHours(-2)),
             new Alert(2, 2, "Power outage in sector 3", DateTime.Now.AddHours(-1)),
@@ -34,8 +36,7 @@ namespace DNET.Backend.Api.DB
             new Alert(10, 10, "Structural damage reported", DateTime.Now)
         };
 
-
-
+        public static List<Weather> weatherData { get; } = new();
     };
 
 }

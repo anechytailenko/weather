@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-namespace Models
+namespace DNET.Backend.Api.Models
 {
     public class Alert
     {   

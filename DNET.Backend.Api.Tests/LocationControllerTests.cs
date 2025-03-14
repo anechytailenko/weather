@@ -1,9 +1,8 @@
 using System.Net;
-using DNET.Backend.Api.DB;
 using System.Text;
 using System.Text.Json;
-using Models;
 using System.Net.Http.Json;
+using DNET.Backend.Api.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace DNET.Backend.Api.Tests;
@@ -44,21 +43,30 @@ public sealed class LocationApiTests : BaseApiTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+    // uncomment based on settings MaxLocation
+    //[Fact]
+    //public async Task CreateLocation_ShouldReturnCreated()
+   // {
+    //    var newLocation = new Location ("Kiev","Ukraine" );
+
+    //    var response = await Client.PostAsJsonAsync("/location", newLocation);
+
+    //    Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+     //   var location = await response.Content.ReadFromJsonAsync<Location>();
+     //   Assert.NotNull(location);
+     //   Assert.Equal("Kiev", location.City);
+   // }
     
+    // comment based on settings MaxLocation
     [Fact]
-    public async Task CreateLocation_ShouldReturnCreated()
+    public async Task CreateLocation_ShouldReturnConflict_WhenExceed_MaxLocation_InSetting()
     {
         var newLocation = new Location ("Kiev","Ukraine" );
-
         var response = await Client.PostAsJsonAsync("/location", newLocation);
-
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-
-        var location = await response.Content.ReadFromJsonAsync<Location>();
-        Assert.NotNull(location);
-        Assert.Equal("Kiev", location.City);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
-    
+
     [Fact]
     public async Task DeleteLocation_ShouldReturnNoContent_WhenLocationExists()
     {
@@ -74,7 +82,10 @@ public sealed class LocationApiTests : BaseApiTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
-
+ 
+    
+   
+   
     [Fact]
     public async Task UpdateLocation_ShouldReturnUpdatedData_WhenLocationExist()
     {
