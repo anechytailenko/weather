@@ -1,14 +1,19 @@
 using System.Text.Json;
-using Models;
+using DNET.Backend.Api.DTOs;
 
-namespace Services.Interfaces;
-
-public interface IWeatherService
+namespace DNET.Backend.Api.Services.Interfaces
 {
-    List<Weather> GetWeather(int limit, int offset);
-    Weather? GetWeatherById(int id);
-    Weather CreateWeather(Weather weather);
-    Weather? UpdateWeather(Weather weather);
-    Weather? UpdateWeather(int id, JsonElement patch);
-    Weather? DeleteWeather(int id);
+
+    public interface IWeatherService
+    {
+        Task<List<WeatherDTO>> GetWeather(int limit, int offset);
+        Task<WeatherDTO?> GetWeatherById(int id);
+        Task<WeatherDTO> CreateWeather(CreateWeatherDTO weatherDto);
+
+        Task<WeatherDTO?> UpdateWeather(int id, CreateWeatherDTO weatherDto);
+
+        Task<WeatherDTO?> UpdateWeather(int id, JsonElement patch);
+        
+        Task<bool> DeleteWeather(int id);
+    }
 }

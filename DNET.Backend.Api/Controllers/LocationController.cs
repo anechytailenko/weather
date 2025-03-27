@@ -1,33 +1,30 @@
 using Microsoft.AspNetCore.Mvc;
-
-using DNET.Backend.Api.DB;
-using DNET.Backend.Api.Models;
-using DNET.Backend.Api.Services;
+using DNET.Backend.Api.DTOs;
+using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services.Interfaces;
 using Microsoft.Extensions.Options;
-
 
 namespace DNET.Backend.Api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/location")]
     public class LocationController : ControllerBase
     {
         private readonly ILocationService _locationService;
         
-        private readonly LocationServiceSettings _locationServiceSettings;
+        private readonly LocationServiceOptions _locationServiceOptions;
         
-        public LocationController(ILocationService locationService, IOptionsSnapshot<LocationServiceSettings> locationServiceSettings)
+        public LocationController(ILocationService locationService, IOptionsSnapshot<LocationServiceOptions> locationServiceSettings)
         {
             _locationService = locationService;
-            _locationServiceSettings = locationServiceSettings.Value;
+            _locationServiceOptions = locationServiceSettings.Value;
         }
         
         
         [HttpPost]
-        public IActionResult CreateNewLocation(Location location)
+        public async Task<IActionResult> CreateNewLocation(CreateLocationDTO locationDto)
         {
-            var newLocation = _locationService.Create(location);
+            var newLocation = await _locationService.CreateLocation(locationDto);
 
             if (newLocation == null)
             {
@@ -39,37 +36,38 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpGet]
-        public IActionResult GetAllLocations()
+        public async Task<IActionResult> GetAllLocations()
         {
-            return Ok(_locationService.GetAllLocations());
+            return Ok(await _locationService.GetAllLocations());
         }
 
         
         [HttpGet("{id}")]
-        public IActionResult GetLocationById(int id)
+        public async Task<IActionResult> GetLocationById(int id)
         {
-            var location = _locationService.GetLocationById(id);
+            var location = await _locationService.GetLocationById(id);
             return location != null ? Ok(location) : NotFound();
         }
-
+        
         
         [HttpPut("{id}")]
-        public IActionResult UpdateEntirelyLocationById(int id, Location location)
+        public async Task<IActionResult> UpdateEntirelyLocationById(int id, CreateLocationDTO locationDto)
         {
-            return _locationService.UpdateEntirelyLocation(id, location) != null ? Ok(location) : NotFound();
+            var existingRecord = await _locationService.UpdateEntirelyLocation(id, locationDto);
+            return existingRecord != null ? Ok(existingRecord) : NotFound();
         }
+        
         
         
         [HttpDelete("{id}")]
-        public IActionResult DeleteLocationById(int id)
+        public async Task<IActionResult> DeleteLocationById(int id)
         {
-            if (!_locationServiceSettings.EnableDelete)
+            if (!_locationServiceOptions.EnableDelete)
             {
                 return Conflict("Deletion is disabled due to configuration settings.");
             }
-            return _locationService.DeleteLLocationById(id) ? NoContent() : NotFound();
+            return await _locationService.DeleteLocationById(id) ? NoContent() : NotFound();
         }
-
         
     }
 }

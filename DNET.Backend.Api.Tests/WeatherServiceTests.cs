@@ -1,103 +1,105 @@
-using Models;
-using Services;
-using DNET.Backend.Api.DB;
+using AutoMapper;
+using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Options;
+using DNET.Backend.Api.Services;
+using DNET.Backend.DataAccess;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Moq;
 
 namespace DNET.Backend.Api.Tests;
 
 [Collection("Sequential")]
-public class WeatherServiceTests
+public class WeatherServiceTests: IAsyncLifetime
 {
     private WeatherService _weatherService;
+    private IMapper _mapper;
+    private WeatherAppDbContext _context;
 
-    public WeatherServiceTests()
+    public async Task InitializeAsync()
     {
-        var optionsMock = new Mock<IOptionsMonitor<WeatherServiceOptions>>();
-        optionsMock.Setup(o => o.CurrentValue).Returns(new WeatherServiceOptions
+        var optionsMock = new Mock<IOptionsSnapshot<WeatherServiceOptions>>();
+        optionsMock.Setup(o => o.Value).Returns(new WeatherServiceOptions
         {
-            
             DefaultPaginationOffset = 0,
             DefaultPaginationLimit = 10,
             DefaultTemperatureUnit = "Celsius",
         });
         
-        _weatherService = new WeatherService(optionsMock.Object);
-        Db.weatherData.Clear();
-        Insert2TestRecords();
+        _mapper = Utils.Get();
+        _context = Utils.CreateInMemoryDatabaseContext();
+        _weatherService = new WeatherService(_context, _mapper, optionsMock.Object);
+        await Insert2TestRecords();
     }
+    public Task DisposeAsync() => Task.CompletedTask;
 
-    private void Insert2TestRecords()
+    private async Task Insert2TestRecords()
     {
-        var newRecord1 = new Weather
-            { Id = 1, LocationId = 1, Temperature = 20.5, Condition = "sunny", RecordedAt = new DateTime() };
-        var newRecord2 = new Weather
-            { Id = 2, LocationId = 2, Temperature = 18.5, Condition = "cloudy", RecordedAt = new DateTime() };
+        //dependency of foreign_key
+        Mock<IOptionsSnapshot<LocationServiceOptions>> _mockLocationServiceSettings = _mockLocationServiceSettings = new Mock<IOptionsSnapshot<LocationServiceOptions>>(); ;
+        _mockLocationServiceSettings.Setup(s => s.Value).Returns(new LocationServiceOptions { MaxLocations = 50 , EnableDelete = false });
+        LocationService _locationService = new LocationService(_context, _mapper, _mockLocationServiceSettings.Object);
+        var location1 = new CreateLocationDTO {City  = "City 1", Country = "Country 1", AlertIds = new List<int>{2,3}};
+        var createdLocation = await _locationService.CreateLocation(location1);
+        Assert.Equal(1,createdLocation.Id);
+        //dependency of foreign_key
         
-        _weatherService.CreateWeather(newRecord1);
-        _weatherService.CreateWeather(newRecord2);
+        
+        var newRecord1 = new CreateWeatherDTO{LocationId = 1, Temperature = 20.5, Condition = "sunny", RecordedAt = new DateTime()};
+        var newRecord2 = new CreateWeatherDTO{LocationId = 2, Temperature = 20.5, Condition = "snowy", RecordedAt = new DateTime()};
+        
+        await _weatherService.CreateWeather(newRecord1);
+        await _weatherService.CreateWeather(newRecord2);
     }
     
     [Fact]
-    public void GetWeather_ShouldReturnAllWeatherData()
+    public async Task GetWeather_ShouldReturnAllWeatherData()
     {
-        var records = _weatherService.GetWeather();
+        var amountOfRecords = await _context.Weather.CountAsync();
+        var records = await _weatherService.GetWeather(-1,-1);
         
         Assert.NotNull(records);
-        Assert.Equal(2, records.Count);
+        Assert.Equal(amountOfRecords, records.Count);
     }
     
     [Fact]
-    public void GetWeatherById_ShouldReturnWeatherData_WhenIdExists()
+    public async Task GetWeatherById_ShouldReturnWeatherData_WhenIdExists()
     {
-        var result = _weatherService.GetWeatherById(1);
+        var result = await _weatherService.GetWeatherById(1);
 
         Assert.NotNull(result);
         Assert.Equal(1, result.Id);
     }
 
     [Fact]
-    public void GetWeatherById_ShouldReturnNull_WhenIdDoesNotExist()
+    public async Task GetWeatherById_ShouldReturnNull_WhenIdDoesNotExist()
     {
-        var result = _weatherService.GetWeatherById(9999);
+        var result = await _weatherService.GetWeatherById(9999);
 
         Assert.Null(result);
     }
     
     [Fact]
-    public void CreateWeather_ShouldAddNewWeatherData()
-    {
-        var newRecord = new Weather
-        {
-            Id = 3,
-            LocationId = 3,
-            Temperature = 25.5,
-            Condition = "rainy",
-            RecordedAt = new DateTime()
-        };
+    public async Task CreateWeather_ShouldAddNewWeatherData()
 
-        var record = _weatherService.CreateWeather(newRecord);
+    {
+        
+        var newRecord = new CreateWeatherDTO{LocationId = 1, Temperature = 20.5, Condition = "rainy", RecordedAt = new DateTime()};
+
+        var record = await _weatherService.CreateWeather(newRecord);
         
         Assert.NotNull(record);
-        Assert.Equal(newRecord.LocationId, record.LocationId);
+        Assert.Equal(newRecord.RecordedAt, record.RecordedAt);
         Assert.Equal(newRecord.Temperature, record.Temperature);
         Assert.Equal(newRecord.Condition, record.Condition);
     }
     
     [Fact]
-    public void UpdateWeather_ShouldUpdateWeatherData_WhenIdExists()
+    public async Task UpdateWeather_ShouldUpdateWeatherData_WhenIdExists()
     {
-        var updatedRecord = new Weather
-        {
-            Id = 1,
-            LocationId = 1,
-            Temperature = 22.5,
-            Condition = "cloudy",
-            RecordedAt = new DateTime()
-        };
+        var updatedRecord = new CreateWeatherDTO{LocationId = 1, Temperature = 22.5, Condition = "cloudy", RecordedAt = new DateTime()};
 
-        var result = _weatherService.UpdateWeather(updatedRecord);
+        var result = await _weatherService.UpdateWeather(1, updatedRecord);
 
         Assert.NotNull(result);
         Assert.Equal(22.5, result.Temperature);
@@ -105,38 +107,35 @@ public class WeatherServiceTests
     }
     
     [Fact]
-    public void UpdateWeather_ShouldReturnNull_WhenIdDoesNotExist()
+    public async Task UpdateWeather_ShouldReturnNull_WhenIdDoesNotExist()
     {
-        var updatedRecord = new Weather
-        {
-            Id = 9999,
-            LocationId = 1,
-            Temperature = 22.5,
-            Condition = "cloudy",
-            RecordedAt = new DateTime()
-        };
+        var updatedRecord = new CreateWeatherDTO{LocationId = 4, Temperature = 22.5, Condition = "fog", RecordedAt = new DateTime()};
 
-        var result = _weatherService.UpdateWeather(updatedRecord);
+        var result = await _weatherService.UpdateWeather(99, updatedRecord);
         Assert.Null(result);
     }
     
     [Fact]
-    public void DeleteWeather_ShouldRemoveWeatherData_WhenIdExists()
+    public async Task DeleteWeather_ShouldRemoveWeatherData_WhenIdExists()
     {
-        var record = _weatherService.GetWeatherById(1);
-        var deletedRecord = _weatherService.DeleteWeather(1);
         
-        Assert.NotNull(deletedRecord);
-        Assert.Equal(record.Id, deletedRecord.Id);
         
-        record = _weatherService.GetWeatherById(1);
+        var newRecord = new CreateWeatherDTO{LocationId = 1, Temperature = 20.5, Condition = "rainy", RecordedAt = new DateTime()};
+        var record = await _weatherService.CreateWeather(newRecord);
+        Assert.NotNull(record);
+        
+        var deletedRecord = await _weatherService.DeleteWeather(record.Id);
+        
+        Assert.True(deletedRecord);
+        
+        record = await _weatherService.GetWeatherById(record.Id);
         Assert.Null(record);
     }
 
     [Fact]
-    public void DeleteWeather_ShouldReturnNull_WhenIdDoesNotExist()
+    public async Task DeleteWeather_ShouldReturnNull_WhenIdDoesNotExist()
     {
-        var deletedRecord = _weatherService.DeleteWeather(9999);
-        Assert.Null(deletedRecord);
+        var deletedRecord = await _weatherService.DeleteWeather(9999);
+        Assert.False(deletedRecord);
     }
 }

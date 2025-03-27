@@ -1,25 +1,23 @@
-
-using DNET.Backend.Api.DB;
 using System.Text.Json;
-using DNET.Backend.Api.Models;
+using DNET.Backend.Api.DTOs;
 
 namespace DNET.Backend.Api.Services.Interfaces
 {
     public interface ILocationService
     {
 
-        public IEnumerable<Location> GetAllLocations() ;
+        public Task<List<LocationDTO>> GetAllLocations() ;
 
 
-        public Location? GetLocationById(int id);
+        public Task<LocationDTO?> GetLocationById(int id);
 
 
-        public Location Create(Location location);
+        public  Task<LocationDTO?> CreateLocation(CreateLocationDTO locationDto);
 
-        public Location? UpdateEntirelyLocation(int id, Location updatedLocation);
+        public  Task<LocationDTO?> UpdateEntirelyLocation(int id, CreateLocationDTO updatedLocationDto);
 
 
-        public bool DeleteLLocationById(int id);
+        public Task<bool> DeleteLocationById(int id);
 
 
     }

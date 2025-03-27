@@ -1,22 +1,20 @@
-
-using DNET.Backend.Api.DB;
 using System.Text.Json;
-using DNET.Backend.Api.Models;
+using DNET.Backend.Api.DTOs;
 
 namespace DNET.Backend.Api.Services.Interfaces
 {
     public interface IAlertService
     
     {
-        public IEnumerable<Alert> GetAllAlert();
+        public Task<List<AlertDTO>> GetAllAlert();
         
-        public Alert? GetAlertById(int id);
+        public Task<AlertDTO?> GetAlertById(int id);
         
-        public Alert Create(Alert alert);
+        public Task<AlertDTO?> CreateAlert(CreateAlertDTO alertDto);
 
-        public Alert? UpdateEntirelyAlert(int id, Alert updatedAlert);
+        public Task<AlertDTO?> UpdateEntirelyAlert(int id, CreateAlertDTO updatedAlertDto);
         
-        public bool DeleteLAlertById(int id);
+        public Task<bool> DeleteAlertById(int id);
         
     }
 }

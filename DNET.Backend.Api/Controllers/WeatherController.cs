@@ -1,10 +1,8 @@
 using System.Text.Json;
-using DNET.Backend.Api.Options;
+using DNET.Backend.Api.DTOs;
+using DNET.Backend.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Models;
-using Services;
-using Services.Interfaces;
+using DNET.Backend.Api.Services.Interfaces;
 
 namespace Controllers;
 
@@ -20,50 +18,57 @@ public class WeatherController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetWeather()
+    public async Task<IActionResult> GetWeather([FromQuery] int limit, [FromQuery] int offset)
     {
-        var query = HttpContext.Request.Query;
-    
-        int.TryParse(query["limit"], out var limit);
-        int.TryParse(query["offset"], out var offset);
-
-        var weatherData = _weatherService.GetWeather(limit, offset);
+        var weatherData = await _weatherService.GetWeather(limit, offset);
     
         return Ok(weatherData);
     }
 
     [HttpGet("{id:int}")]
-    public IActionResult GetWeatherById(int id)
+    public async Task<IActionResult> GetWeatherById(int id)
     {
-        var record = _weatherService.GetWeatherById(id);
+        var record = await _weatherService.GetWeatherById(id);
         return record == null ? NotFound() : Ok(record);
     }
 
     [HttpPost]
-    public IActionResult CreateWeather(Weather data)
+    public async Task<IActionResult> CreateWeather(CreateWeatherDTO weatherDto)
     {
-        var record = _weatherService.CreateWeather(data);
-        return Created($"/weather/{record.Id}", data);
+        var record = await _weatherService.CreateWeather(weatherDto);
+        return Created($"/weather/{record.Id}", record);
     }
 
     [HttpPut("{id:int}")]
-    public IActionResult UpdateWeather(int id, Weather data)
+    public async Task<IActionResult> UpdateWeather(int id, CreateWeatherDTO data)
     {
-        var record = _weatherService.UpdateWeather(data);
-        return record == null ? NotFound() : Ok(data);
-    }
-
-    [HttpPatch("{id:int}")]
-    public IActionResult UpdateWeather(int id, JsonElement patch)
-    {
-        var record = _weatherService.UpdateWeather(id, patch);
+        var record = await _weatherService.UpdateWeather(id, data);
         return record == null ? NotFound() : Ok(record);
     }
 
-    [HttpDelete("{id:int}")]
-    public IActionResult DeleteWeather(int id)
+    [HttpPatch("{id:int}")]
+    public async Task<ActionResult<WeatherDTO>> UpdateWeather(int id, [FromBody] JsonElement patch)
     {
-        var record = _weatherService.DeleteWeather(id);
+        if (patch.ValueKind == JsonValueKind.Null || patch.ValueKind == JsonValueKind.Undefined)
+        {
+            return BadRequest("Patch document is required.");
+        }
+
+        var updatedWeather = await _weatherService.UpdateWeather(id, patch);
+
+        if (updatedWeather == null)
+        {
+            return NotFound($"Weather record with ID {id} not found.");
+        }
+
+        return Ok(updatedWeather);
+    }
+
+    
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteWeather(int id)
+    {
+        var record = await _weatherService.DeleteWeather(id);
         return record == null ? NotFound() : NoContent();
     }
 }

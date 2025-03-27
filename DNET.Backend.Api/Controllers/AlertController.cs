@@ -1,34 +1,31 @@
 using Microsoft.AspNetCore.Mvc;
-
-using DNET.Backend.Api.DB;
-using DNET.Backend.Api.Models;
-using DNET.Backend.Api.Services;
+using DNET.Backend.Api.DTOs;
+using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services.Interfaces;
 using Microsoft.Extensions.Options;
-
 
 namespace DNET.Backend.Api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/alert")]
     public class AlertController : ControllerBase
     {
         
         private readonly IAlertService _alertService;
         
-        private readonly AlertServiceSettings _alertServiceSettings;
+        private readonly AlertServiceOptions _alertServiceOptions;
         
-        public AlertController(IAlertService alertService, IOptionsSnapshot<AlertServiceSettings> alertServiceSettings)
+        public AlertController(IAlertService alertService, IOptionsSnapshot<AlertServiceOptions> alertServiceSettings)
         {
             _alertService = alertService;
-            _alertServiceSettings = alertServiceSettings.Value;
+            _alertServiceOptions = alertServiceSettings.Value;
         }
         
         
         [HttpPost]
-        public IActionResult CreateNewAlert(Alert alert)
+        public async Task<IActionResult> CreateNewAlert(CreateAlertDTO alertDto)
         {
-            var newAlert = _alertService.Create(alert);
+            var newAlert = await _alertService.CreateAlert(alertDto);
             
             if (newAlert == null)
             {
@@ -39,36 +36,37 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpGet]
-        public IActionResult GetAllAlerts()
+        public async Task<IActionResult> GetAllAlerts()
         {
-            return Ok(_alertService.GetAllAlert());
+            return Ok(await _alertService.GetAllAlert());
         }
 
         
         [HttpGet("{id}")]
-        public IActionResult GetAlertById(int id)
+        public async Task<IActionResult> GetAlertById(int id)
         {
-            var alert = _alertService.GetAlertById(id);
+            var alert = await _alertService.GetAlertById(id);
             return alert != null ? Ok(alert) : NotFound();
         }
 
         
         [HttpPut("{id}")]
-        public IActionResult UpdateEntirelyLocationById(int id, Alert alert)
+        public async Task<IActionResult> UpdateEntirelyLocationById(int id, CreateAlertDTO alertDto)
         {
-            return _alertService.UpdateEntirelyAlert(id, alert) != null ? Ok(alert) : NotFound();
+            var existingRecord = await _alertService.UpdateEntirelyAlert(id, alertDto);
+            return existingRecord != null ? Ok(existingRecord) : NotFound();
         }
         
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteAlertById(int id)
+        public async Task<IActionResult> DeleteAlertById(int id)
         {
-            if (!_alertServiceSettings.EnableDelete)
+            if (!_alertServiceOptions.EnableDelete)
             {
                 return Conflict("Deletion is disabled due to configuration settings.");
             }
             
-            return _alertService.DeleteLAlertById(id) ? NoContent() : NotFound();
+            return await _alertService.DeleteAlertById(id) ? NoContent() : NotFound();
         }
     }
 }
