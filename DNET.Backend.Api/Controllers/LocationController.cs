@@ -1,3 +1,4 @@
+using DNET.Backend.Api.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Options;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 namespace DNET.Backend.Api.Controllers
 {
     [ApiController]
+    [ApiKey]
     [Route("/location")]
     public class LocationController : ControllerBase
     {

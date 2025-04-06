@@ -1,7 +1,9 @@
+using DNET.Backend.Api.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace DNET.Backend.Api.Controllers
@@ -23,6 +25,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpPost]
+        [ApiKey]
         public async Task<IActionResult> CreateNewAlert(CreateAlertDTO alertDto)
         {
             var newAlert = await _alertService.CreateAlert(alertDto);
@@ -36,6 +39,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllAlerts()
         {
             return Ok(await _alertService.GetAllAlert());
@@ -43,6 +47,7 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAlertById(int id)
         {
             var alert = await _alertService.GetAlertById(id);
@@ -51,6 +56,7 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpPut("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> UpdateEntirelyLocationById(int id, CreateAlertDTO alertDto)
         {
             var existingRecord = await _alertService.UpdateEntirelyAlert(id, alertDto);
@@ -59,6 +65,7 @@ namespace DNET.Backend.Api.Controllers
         
 
         [HttpDelete("{id}")]
+        [ApiKey]
         public async Task<IActionResult> DeleteAlertById(int id)
         {
             if (!_alertServiceOptions.EnableDelete)

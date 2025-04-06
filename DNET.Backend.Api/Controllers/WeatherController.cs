@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DNET.Backend.Api.Attributes;
 using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using DNET.Backend.Api.Services.Interfaces;
 namespace Controllers;
 
 [ApiController]
+[ApiKey]
 [Route("/weather")]
 public class WeatherController : ControllerBase
 {
