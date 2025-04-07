@@ -3,6 +3,7 @@ using System;
 using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DNET.Backend.DataAccess.Migrations
 {
     [DbContext(typeof(WeatherAppDbContext))]
-    partial class WeatherAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250406221054_add_columns_user")]
+    partial class add_columns_user
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,12 +115,6 @@ namespace DNET.Backend.DataAccess.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("first_name");
 
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("ip_address");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -166,12 +163,6 @@ namespace DNET.Backend.DataAccess.Migrations
                         .HasColumnType("character varying(32)")
                         .HasDefaultValue("User")
                         .HasColumnName("role");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("user_agent");
 
                     b.HasKey("Id");
 

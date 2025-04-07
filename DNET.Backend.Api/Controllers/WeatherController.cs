@@ -4,6 +4,7 @@ using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using DNET.Backend.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Controllers;
 
@@ -20,6 +21,7 @@ public class WeatherController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "RequireUser")]
     public async Task<IActionResult> GetWeather([FromQuery] int limit, [FromQuery] int offset)
     {
         var weatherData = await _weatherService.GetWeather(limit, offset);
@@ -28,6 +30,7 @@ public class WeatherController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "RequireUser")]
     public async Task<IActionResult> GetWeatherById(int id)
     {
         var record = await _weatherService.GetWeatherById(id);
@@ -35,6 +38,7 @@ public class WeatherController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> CreateWeather(CreateWeatherDTO weatherDto)
     {
         var record = await _weatherService.CreateWeather(weatherDto);
@@ -42,6 +46,7 @@ public class WeatherController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> UpdateWeather(int id, CreateWeatherDTO data)
     {
         var record = await _weatherService.UpdateWeather(id, data);
@@ -49,6 +54,7 @@ public class WeatherController : ControllerBase
     }
 
     [HttpPatch("{id:int}")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<ActionResult<WeatherDTO>> UpdateWeather(int id, [FromBody] JsonElement patch)
     {
         if (patch.ValueKind == JsonValueKind.Null || patch.ValueKind == JsonValueKind.Undefined)
@@ -68,6 +74,7 @@ public class WeatherController : ControllerBase
 
     
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> DeleteWeather(int id)
     {
         var record = await _weatherService.DeleteWeather(id);

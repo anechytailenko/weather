@@ -25,6 +25,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpPost]
+        [Authorize(Policy = "RequireAdmin")]
         [ApiKey]
         public async Task<IActionResult> CreateNewAlert(CreateAlertDTO alertDto)
         {
@@ -39,6 +40,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpGet]
+        [Authorize(Policy = "RequireUser")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllAlerts()
         {
@@ -47,6 +49,7 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpGet("{id}")]
+        [Authorize(Policy = "RequireUser")] 
         [AllowAnonymous]
         public async Task<IActionResult> GetAlertById(int id)
         {
@@ -56,6 +59,7 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpPut("{id}")]
+        [Authorize(Policy = "RequireAdmin")]
         [AllowAnonymous]
         public async Task<IActionResult> UpdateEntirelyLocationById(int id, CreateAlertDTO alertDto)
         {
@@ -65,6 +69,7 @@ namespace DNET.Backend.Api.Controllers
         
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireAdmin")]
         [ApiKey]
         public async Task<IActionResult> DeleteAlertById(int id)
         {

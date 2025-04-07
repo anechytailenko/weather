@@ -11,6 +11,7 @@ public class WeatherAppDbContext : DbContext
     public DbSet<LocationEntity> Location { get; set; }
     
     public DbSet<AlertLocationEntity> LocationAlerts { get; set; }
+    public DbSet<UserEntity> User { get; set; }
 
     public WeatherAppDbContext(DbContextOptions<WeatherAppDbContext> options) : base(options)
     {

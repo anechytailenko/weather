@@ -3,6 +3,7 @@ using System;
 using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DNET.Backend.DataAccess.Migrations
 {
     [DbContext(typeof(WeatherAppDbContext))]
-    partial class WeatherAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250406171640_AddLoginProviderColumn")]
+    partial class AddLoginProviderColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,12 +115,6 @@ namespace DNET.Backend.DataAccess.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("first_name");
 
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("ip_address");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -135,43 +132,11 @@ namespace DNET.Backend.DataAccess.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("password_hash");
 
-                    b.Property<string>("PasswordResetToken")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("password_reset_token");
-
-                    b.Property<DateTime?>("PasswordResetTokenExpires")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("password_reset_token_expires");
-
                     b.Property<string>("PasswordSalt")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("password_salt");
-
-                    b.Property<DateTime?>("RefreshTokenExpiration")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("refresh_token_expiration");
-
-                    b.Property<string>("RefreshTokenHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("refresh_token_hash");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasDefaultValue("User")
-                        .HasColumnName("role");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("user_agent");
 
                     b.HasKey("Id");
 

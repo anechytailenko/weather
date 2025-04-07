@@ -10,19 +10,37 @@ using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using DNET.Backend.Api.Services.Interfaces;
 using DNET.Backend.Api.Profiles;
+using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi.Models;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<ExceptionHandlerMiddleware>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<WeatherAppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WeatherAppDb"))
 );
+builder.Services.AddSingleton<IJwtValidator, JwtValidator>();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options => { options.TokenValidationParameters = JwtValidator.CreateTokenValidationParameters(); });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequireUser", policy => policy.RequireRole("User"));
+});
+
 builder.Services.AddScoped<IAlertService,AlertService>();
 builder.Services.AddScoped<ILocationService,LocationService>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<ApiKeyFilter>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.Configure<ApiKeyOptions>(builder.Configuration.GetSection("ApiKeys"));    
@@ -47,8 +65,6 @@ builder.Services.AddControllers(options =>
 
 var app = builder.Build();
 
-app.UseMiddleware<LoggingMiddleware>();
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -56,6 +72,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<LoggingMiddleware>();
+
 app.MapControllers();
 app.Run();
 

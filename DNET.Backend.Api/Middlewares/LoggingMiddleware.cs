@@ -20,7 +20,7 @@ public class LoggingMiddleware
         
         await _next(context);
         
-        var durationInMs = (startTime - Stopwatch.GetTimestamp()) * 1000 / (double)Stopwatch.Frequency ;
+        var durationInMs  = (Stopwatch.GetTimestamp() - startTime) * 1000 / (double)Stopwatch.Frequency;
 
         _logger.LogInformation($"Response: {context.Request.Method} {context.Request.Path} responded {context.Response.StatusCode} in {durationInMs}ms");
     }

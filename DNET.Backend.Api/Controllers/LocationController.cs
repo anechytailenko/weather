@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace DNET.Backend.Api.Controllers
@@ -24,6 +25,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpPost]
+        [Authorize(Policy = "RequireAdmin")]
         public async Task<IActionResult> CreateNewLocation(CreateLocationDTO locationDto)
         {
             var newLocation = await _locationService.CreateLocation(locationDto);
@@ -38,6 +40,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpGet]
+        [Authorize(Policy = "RequireUser")]
         public async Task<IActionResult> GetAllLocations()
         {
             return Ok(await _locationService.GetAllLocations());
@@ -45,6 +48,7 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpGet("{id}")]
+        [Authorize(Policy = "RequireUser")]
         public async Task<IActionResult> GetLocationById(int id)
         {
             var location = await _locationService.GetLocationById(id);
@@ -53,6 +57,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpPut("{id}")]
+        [Authorize(Policy = "RequireAdmin")]
         public async Task<IActionResult> UpdateEntirelyLocationById(int id, CreateLocationDTO locationDto)
         {
             var existingRecord = await _locationService.UpdateEntirelyLocation(id, locationDto);
@@ -62,6 +67,7 @@ namespace DNET.Backend.Api.Controllers
         
         
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireAdmin")]
         public async Task<IActionResult> DeleteLocationById(int id)
         {
             if (!_locationServiceOptions.EnableDelete)
