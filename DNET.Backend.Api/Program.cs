@@ -12,6 +12,7 @@ using DNET.Backend.Api.Services.Interfaces;
 using DNET.Backend.Api.Profiles;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.OpenApi.Models;
 
 Env.Load();
@@ -46,7 +47,16 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IAlertService,AlertService>();
 builder.Services.AddScoped<ILocationService,LocationService>();
-builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped<IWeatherService>(sp =>
+{
+    var weatherService = sp.GetRequiredService<WeatherService>();
+    var cache = sp.GetRequiredService<IMemoryCache>();
+    var logger = sp.GetRequiredService<ILogger<WeatherServiceWithCache>>();
+    return new WeatherServiceWithCache(weatherService, cache, logger);
+});
+
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ApiKeyFilter>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
