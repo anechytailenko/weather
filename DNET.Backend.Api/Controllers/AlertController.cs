@@ -1,6 +1,7 @@
 using DNET.Backend.Api.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using DNET.Backend.Api.DTOs;
+using DNET.Backend.Api.Filters;
 using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -49,6 +50,7 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpGet("{id}")]
+        [EtagFilter]
         [Authorize(Policy = "RequireUser")] 
         [AllowAnonymous]
         public async Task<IActionResult> GetAlertById(int id)
