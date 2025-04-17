@@ -80,4 +80,25 @@ public class WeatherController : ControllerBase
         var record = await _weatherService.DeleteWeather(id);
         return record == null ? NotFound() : NoContent();
     }
+    
+    
+    [HttpGet("fetch")]
+    [Authorize(Policy = "RequireAdmin")]
+    public async Task<IActionResult> FetchWeather([FromQuery] string location)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return BadRequest("Location parameter is required");
+            }
+
+            var weather = await _weatherService.FetchAndStoreWeather(location);
+            return Ok(weather);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error fetching weather: {ex.Message}");
+        }
+    }
 }

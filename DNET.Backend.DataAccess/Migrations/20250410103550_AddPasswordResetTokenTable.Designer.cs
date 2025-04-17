@@ -3,6 +3,7 @@ using System;
 using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DNET.Backend.DataAccess.Migrations
 {
     [DbContext(typeof(WeatherAppDbContext))]
-    partial class WeatherAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250410103550_AddPasswordResetTokenTable")]
+    partial class AddPasswordResetTokenTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -95,30 +98,25 @@ namespace DNET.Backend.DataAccess.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Expires")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("token");
+                        .HasColumnType("text");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer")
-                        .HasColumnName("user_id");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("password_reset_token", (string)null);
+                    b.ToTable("PasswordResetToken");
                 });
 
             modelBuilder.Entity("DNET.Backend.DataAccess.Domain.UserEntity", b =>

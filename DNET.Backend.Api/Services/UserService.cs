@@ -13,11 +13,12 @@ namespace DNET.Backend.Api.Services;
 
 public class UserService : IUserService
 {
+    private readonly IEmailService _emailService;
     private readonly WeatherAppDbContext _context;
     private readonly IJwtValidator _jwtValidator;
     private readonly IHttpContextAccessor _httpContextAccessor;
     
-    public UserService(WeatherAppDbContext context, IJwtValidator jwtValidator, IHttpContextAccessor httpContextAccessor)
+    public UserService(WeatherAppDbContext context, IJwtValidator jwtValidator, IHttpContextAccessor httpContextAccessor,IEmailService emailService)
     {
         _context = context;
         _jwtValidator = jwtValidator;
@@ -217,44 +218,69 @@ public class UserService : IUserService
             
         if (user == null) return null;
 
+        var token = GenerateResetToken();
         
-        var tokenBytes = RandomNumberGenerator.GetBytes(32);
+        var newPasswordResetToken = new PasswordResetTokenEntity()
+        {
+            Token = token,
+            Expires = DateTime.UtcNow.AddSeconds(30),
+            UserId = user.Id
+        };
         
-        var token = Convert.ToBase64String(tokenBytes)
-            .Replace("+", "-")
-            .Replace("/", "_")
-            .Replace("=", "");
-
-        
-        user.PasswordResetToken = token;
-        user.PasswordResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+        _context.PasswordResetToken.Add(newPasswordResetToken);
             
         await _context.SaveChangesAsync();
-            
-       
             
         return token;
     }
 
     public async Task<bool> ResetPassword(string resetCode, string newPassword)
     {
-        var user = await _context.User.FirstOrDefaultAsync(u => 
-            u.PasswordResetToken == resetCode && u.PasswordResetTokenExpires > DateTime.UtcNow);
+      
+        var passwordResetToken = await _context.PasswordResetToken
+            .FirstOrDefaultAsync(r => r.Token == resetCode);
 
+        if (passwordResetToken == null) return false;
+        if (passwordResetToken.Expires < DateTime.UtcNow) return false;
+
+        var user = await _context.User.FirstOrDefaultAsync(u => u.Id == passwordResetToken.UserId);
         if (user == null) return false;
 
-        
         var newSalt = Guid.NewGuid().ToString();
         user.PasswordSalt = newSalt;
         user.PasswordHash = Hash(newPassword, newSalt);
-            
-        
-        user.PasswordResetToken = null;
-        user.PasswordResetTokenExpires = null;
-            
+
+        _context.PasswordResetToken.Remove(passwordResetToken);
         await _context.SaveChangesAsync();
-        return true;
+
+            
+        //using (var httpClient = new HttpClient())
+        //{ 
+        //    var payload = new Dictionary<string, string>
+        //    {
+        //         { "email", user.Email },
+        //        { "code", resetCode }
+        //    };
+
+        //    var content = new FormUrlEncodedContent(payload);
+
+                
+        //    var webhookUrl = "https://webhook.site/your-unique-url";
+        //    await httpClient.PostAsync(webhookUrl, content);
+        //  }
+        // return true;
+
+        //}
+        var emailSent = await _emailService.SendEmailAsync(
+            user.Email, 
+            "Password Reset", 
+            $"You requested a password reset. Use the following code: {resetCode}");
+
+        return emailSent;
     }
+    
+    
+    
     
     private static string Hash(string password, string salt="")
     {
@@ -272,6 +298,18 @@ public class UserService : IUserService
             new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
             new(ClaimTypes.Role, user.Role)
         };
+    }
+
+    private string GenerateResetToken()
+    {
+        var tokenBytes = RandomNumberGenerator.GetBytes(32);
+        
+        var token = Convert.ToBase64String(tokenBytes)
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", "");
+
+        return token;
     }
 }
     

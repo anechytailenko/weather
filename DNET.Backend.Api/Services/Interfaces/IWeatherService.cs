@@ -15,5 +15,7 @@ namespace DNET.Backend.Api.Services.Interfaces
         Task<WeatherDTO?> UpdateWeather(int id, JsonElement patch);
         
         Task<bool> DeleteWeather(int id);
+
+        Task<WeatherDTO> FetchAndStoreWeather(string location);
     }
 }

@@ -61,15 +61,6 @@ public class UserEntityConfigurations : IEntityTypeConfiguration<UserEntity>
             .HasColumnType("character varying(32)")
             .HasDefaultValue("User")
             .IsRequired();
-
-        builder.Property(u => u.PasswordResetToken)
-            .HasColumnName("password_reset_token")
-            .HasMaxLength(64)
-            .HasColumnType("character varying(64)");
-
-        builder.Property(u => u.PasswordResetTokenExpires)
-            .HasColumnName("password_reset_token_expires")
-            .HasColumnType("timestamp with time zone");
         
         builder.Property(e => e.IpAddress)
             .HasColumnName("ip_address")

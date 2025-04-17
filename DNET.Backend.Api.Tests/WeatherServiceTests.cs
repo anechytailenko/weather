@@ -1,4 +1,5 @@
 using AutoMapper;
+using DNET.Backend.Api.Clients;
 using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services;
@@ -15,7 +16,7 @@ public class WeatherServiceTests: IAsyncLifetime
     private WeatherService _weatherService;
     private IMapper _mapper;
     private WeatherAppDbContext _context;
-
+    private  Mock<IExternalWeatherApiClient> _mockApiClient;
     public async Task InitializeAsync()
     {
         var optionsMock = new Mock<IOptionsSnapshot<WeatherServiceOptions>>();
@@ -28,7 +29,8 @@ public class WeatherServiceTests: IAsyncLifetime
         
         _mapper = Utils.Get();
         _context = Utils.CreateInMemoryDatabaseContext();
-        _weatherService = new WeatherService(_context, _mapper, optionsMock.Object);
+        _mockApiClient = new Mock<IExternalWeatherApiClient>();
+        _weatherService = new WeatherService(_context, _mapper, optionsMock.Object,_mockApiClient.Object);
         await Insert2TestRecords();
     }
     public Task DisposeAsync() => Task.CompletedTask;

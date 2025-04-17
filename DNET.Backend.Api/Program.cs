@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-
+using DNET.Backend.Api.Clients;
 using DNET.Backend.Api.Filters;
 using DNET.Backend.Api.Middleware;
 
@@ -39,6 +39,16 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => { options.TokenValidationParameters = JwtValidator.CreateTokenValidationParameters(); });
 
+
+
+builder.Services.AddHttpClient<IExternalWeatherApiClient, ExternalWeatherApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["WeatherApi:BaseUrl"]);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
@@ -60,6 +70,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ApiKeyFilter>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddSingleton<IEmailService, EmailService>();
 
 builder.Services.Configure<ApiKeyOptions>(builder.Configuration.GetSection("ApiKeys"));    
 builder.Services.Configure<LocationServiceOptions>(builder.Configuration.GetSection("LocationService"));
@@ -76,11 +87,8 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 
-// run migration by start
-// using var scope = app.Services.CreateScope();
-// var dbContext = scope.ServiceProvider.GetRequiredService<WeatherAppDbContext>();
-// dbContext.Database.Migrate();
-
+builder.Services.AddHostedService<MigrationService>();
+builder.Services.AddHostedService<DeleteExpiredResetTokensService>();
 
 var app = builder.Build();
 

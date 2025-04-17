@@ -13,14 +13,10 @@ public class UserEntity
 
     public string? RefreshTokenHash { get; set; } = string.Empty;
     public DateTime? RefreshTokenExpiration { get; set; }
-
     
     public string Role { get; set; } = "User";
-    
-    public string? PasswordResetToken { get; set; }
-    
-    public DateTime? PasswordResetTokenExpires { get; set; }
-    
     public string IpAddress { get; set; } = string.Empty;
     public string UserAgent { get; set; } = string.Empty;
+    
+    public List<PasswordResetTokenEntity>? PasswordResetTokens { get; set; }
 }

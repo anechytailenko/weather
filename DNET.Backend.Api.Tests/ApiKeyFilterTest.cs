@@ -38,12 +38,12 @@ namespace DNET.Backend.Api.Tests.Filters
                 _actionContext,
                 new List<IFilterMetadata>(),
                 new Dictionary<string, object>(),
-                Mock.Of<Controller>());
+                Moq.Mock.Of<Controller>());
             
             _next = () => Task.FromResult(new ActionExecutedContext(
                 _actionContext,
                 new List<IFilterMetadata>(),
-                Mock.Of<Controller>()));
+                Moq.Mock.Of<Controller>()));
         }
         
 

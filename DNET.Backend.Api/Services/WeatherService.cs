@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.Options;
 using AutoMapper.QueryableExtensions;
 using AutoMapper;
-
+using DNET.Backend.Api.Clients;
 using DNET.Backend.Api.Services.Interfaces;
 
 
@@ -20,12 +20,14 @@ namespace DNET.Backend.Api.Services
         private readonly WeatherAppDbContext _context;
         private readonly IMapper _mapper;
         private readonly WeatherServiceOptions _weatherServiceOptions;
+        private readonly IExternalWeatherApiClient _weatherApiClient;
 
-        public WeatherService(WeatherAppDbContext context, IMapper mapper,IOptionsSnapshot<WeatherServiceOptions> weatherServiceSettings)
+        public WeatherService(WeatherAppDbContext context, IMapper mapper,IOptionsSnapshot<WeatherServiceOptions> weatherServiceSettings,IExternalWeatherApiClient weatherApiClient)
         {
             _context = context;
             _mapper = mapper;
             _weatherServiceOptions = weatherServiceSettings.Value;
+            _weatherApiClient = weatherApiClient;
         }
 
 
@@ -187,5 +189,59 @@ namespace DNET.Backend.Api.Services
 
             return true;
         }
+        
+        
+        
+        public async Task<WeatherDTO> FetchAndStoreWeather(string location)
+        {
+            try
+            {
+                
+                var externalData = await _weatherApiClient.GetWeatherDataAsync(location);
+        
+                // assume LocationName in external api has format "City, Country"
+                var locationComponents = externalData.LocationName.Split(',').Select(x => x.Trim()).ToArray();
+        
+                var city = locationComponents.Length > 0 ? locationComponents[0] : "Unknown";
+                var country = locationComponents.Length > 1 ? locationComponents[1] : "Unknown";
+
+               
+                var locationEntity = await _context.Location.FirstOrDefaultAsync(l => l.City == city && l.Country == country) 
+                                     ?? new LocationEntity 
+                                     { 
+                                         City = city,
+                                         Country = country,
+                                         Weathers = new List<WeatherEntity>()
+                                     };
+
+               
+                var weatherEntity = new WeatherEntity
+                {
+                    Temperature = externalData.Temperature,
+                    Condition = externalData.Condition,
+                    RecordedAt = externalData.ObservationTime,
+                    Location = locationEntity
+                };
+
+                
+                locationEntity.Weathers.Add(weatherEntity);
+        
+                
+                if (locationEntity.Id == 0)
+                {
+                    _context.Location.Add(locationEntity);
+                }
+                
+                _context.Weather.Add(weatherEntity);
+                
+                await _context.SaveChangesAsync();
+                
+                return _mapper.Map<WeatherDTO>(weatherEntity);
+            }
+            catch (Exception ex) when (ex is not ApplicationException)
+            {
+                throw new ApplicationException("Failed to fetch weather data", ex);
+            }
+        }  
     }
 }

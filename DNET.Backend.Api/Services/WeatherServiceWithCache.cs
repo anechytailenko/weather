@@ -49,5 +49,9 @@ namespace DNET.Backend.Api.Services
         public Task<WeatherDTO?> UpdateWeather(int id, JsonElement patch) => _inner.UpdateWeather(id, patch);
 
         public Task<bool> DeleteWeather(int id) => _inner.DeleteWeather(id);
+        public Task<WeatherDTO> FetchAndStoreWeather(string location)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
