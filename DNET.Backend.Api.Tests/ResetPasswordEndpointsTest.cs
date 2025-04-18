@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
+namespace DNET.Backend.Api.Tests;
 public class UserControllerTests
 {
     private readonly Mock<IUserService> _mockUserService = new();

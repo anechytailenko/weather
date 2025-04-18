@@ -23,6 +23,7 @@ public class UserService : IUserService
         _context = context;
         _jwtValidator = jwtValidator;
         _httpContextAccessor = httpContextAccessor;
+        _emailService = emailService;
     }
 
     public async Task<UserDTO?> GetUserById(int id)
@@ -282,7 +283,7 @@ public class UserService : IUserService
     
     
     
-    private static string Hash(string password, string salt="")
+    public static string Hash(string password, string salt="")
     {
         using var sha256 = System.Security.Cryptography.SHA256.Create();
         var hash = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password + salt));
