@@ -82,5 +82,21 @@ namespace DNET.Backend.Api.Controllers
             
             return await _alertService.DeleteAlertById(id) ? NoContent() : NotFound();
         }
+
+        [HttpPost("generate")]
+        public async Task<IActionResult> GenerateRandomEntries()
+        {
+            var numberOfAlertsToGenerate = 10;
+            var newAlerts = new List<AlertDTO>();
+
+            for (var i = 0; i < numberOfAlertsToGenerate; i++)
+            {
+                var newAlert = new CreateAlertDTO { Message = $"Alert message {Random.Shared.Next(1, 1000)}", IssuedAt = DateTime.UtcNow };
+                var alert = await _alertService.CreateAlert(newAlert);
+                newAlerts.Add(alert);
+            }
+            
+            return Ok(newAlerts);
+        }
     }
 }
