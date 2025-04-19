@@ -25,8 +25,8 @@ builder.Services.AddScoped<RateLimitMiddleware>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-services.AddDbContext<AppDbContext>(options => 
-    options.UseNpgsql(Configuration.GetConnectionString("ProductDb")));
+builder.Services.AddDbContext<AppDbContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ProductDb")));
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
