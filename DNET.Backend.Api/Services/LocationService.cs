@@ -6,7 +6,7 @@ using DNET.Backend.DataAccess.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using AutoMapper.QueryableExtensions;
-using AutoMapper;
+using AutoMapper; 
 using DNET.Backend.Api.Services.Interfaces;
 
 namespace DNET.Backend.Api.Services
