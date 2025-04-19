@@ -8,11 +8,13 @@ public class RateLimitMiddleware : IMiddleware
 {
     private readonly IConfiguration _configuration;
     private readonly RateLimitOptions _rateLimitOptions;
+    private readonly ILogger<RateLimitMiddleware> _logger;
 
-    public RateLimitMiddleware(IConfiguration configuration, IOptionsSnapshot<RateLimitOptions> rateLimitOptions)
+    public RateLimitMiddleware(IConfiguration configuration, IOptionsSnapshot<RateLimitOptions> rateLimitOptions,ILogger<RateLimitMiddleware> logger)
     {
         _configuration = configuration;
         _rateLimitOptions = rateLimitOptions.Value;
+        _logger = logger;
     }
     
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -25,14 +27,17 @@ public class RateLimitMiddleware : IMiddleware
         var db = redis.GetDatabase();
         
         var rateLimit= await db.StringIncrementAsync(cacheKey);
-        
+
         if (rateLimit == 1)
         {
             await db.KeyExpireAsync(cacheKey, TimeSpan.FromHours(1));
         }
         
+        _logger.LogInformation("Amount of requests in the current hour: {Count} (IP: {IP}).", rateLimit,ipAddress);
+        
         if (rateLimit > _rateLimitOptions.DefaultLimit)
         {
+            _logger.LogWarning("Exceeded rate limit: {Limit} (IP: {IP}). Returned 429.", ipAddress, _rateLimitOptions.DefaultLimit);
             context.Response.StatusCode = 429;
             return;
         }

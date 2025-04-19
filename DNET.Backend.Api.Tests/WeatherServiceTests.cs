@@ -5,6 +5,7 @@ using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Services;
 using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -17,6 +18,8 @@ public class WeatherServiceTests: IAsyncLifetime
     private IMapper _mapper;
     private WeatherAppDbContext _context;
     private  Mock<IExternalWeatherApiClient> _mockApiClient;
+    private Mock<ILogger<WeatherService>> _mockLogger;
+    
     public async Task InitializeAsync()
     {
         var optionsMock = new Mock<IOptionsSnapshot<WeatherServiceOptions>>();
@@ -25,12 +28,14 @@ public class WeatherServiceTests: IAsyncLifetime
             DefaultPaginationOffset = 0,
             DefaultPaginationLimit = 10,
             DefaultTemperatureUnit = "Celsius",
+            
         });
         
         _mapper = Utils.Get();
         _context = Utils.CreateInMemoryDatabaseContext();
         _mockApiClient = new Mock<IExternalWeatherApiClient>();
-        _weatherService = new WeatherService(_context, _mapper, optionsMock.Object,_mockApiClient.Object);
+        _mockLogger = new Mock<ILogger<WeatherService>>();
+        _weatherService = new WeatherService(_context, _mapper, optionsMock.Object,_mockApiClient.Object,_mockLogger.Object);
         await Insert2TestRecords();
     }
     public Task DisposeAsync() => Task.CompletedTask;
@@ -38,9 +43,10 @@ public class WeatherServiceTests: IAsyncLifetime
     private async Task Insert2TestRecords()
     {
         //dependency of foreign_key
-        Mock<IOptionsSnapshot<LocationServiceOptions>> _mockLocationServiceSettings = _mockLocationServiceSettings = new Mock<IOptionsSnapshot<LocationServiceOptions>>(); ;
+        Mock<IOptionsSnapshot<LocationServiceOptions>> _mockLocationServiceSettings  = new Mock<IOptionsSnapshot<LocationServiceOptions>>(); ;
         _mockLocationServiceSettings.Setup(s => s.Value).Returns(new LocationServiceOptions { MaxLocations = 50 , EnableDelete = false });
-        LocationService _locationService = new LocationService(_context, _mapper, _mockLocationServiceSettings.Object);
+        Mock<ILogger<LocationService>> _mockLoggerLocation = new Mock<ILogger<LocationService>>();
+        LocationService _locationService = new LocationService(_context, _mapper, _mockLocationServiceSettings.Object, _mockLoggerLocation.Object);
         var location1 = new CreateLocationDTO {City  = "City 1", Country = "Country 1", AlertIds = new List<int>{2,3}};
         var createdLocation = await _locationService.CreateLocation(location1);
         Assert.Equal(1,createdLocation.Id);

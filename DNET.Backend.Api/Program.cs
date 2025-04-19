@@ -24,6 +24,7 @@ builder.Services.AddScoped<ExceptionHandlerMiddleware>();
 builder.Services.AddScoped<RateLimitMiddleware>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContext<WeatherAppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WeatherAppDb"))
 );

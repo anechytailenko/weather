@@ -2,6 +2,12 @@ namespace DNET.Backend.Api.Middleware;
 
 public class ExceptionHandlerMiddleware : IMiddleware 
 {
+    private readonly ILogger<ExceptionHandlerMiddleware> _logger;
+    
+    public ExceptionHandlerMiddleware(ILogger<ExceptionHandlerMiddleware> logger)
+    {
+        _logger = logger;
+    }
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         try
@@ -10,6 +16,8 @@ public class ExceptionHandlerMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception occurred while processing request for path: {Path}", context.Request.Path);
+
             context.Response.StatusCode = 500;
             
             var errorMessage = new

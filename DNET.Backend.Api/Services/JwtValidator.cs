@@ -10,10 +10,18 @@ namespace DNET.Backend.Api.Services;
 public class JwtValidator : IJwtValidator
 {
     private const string Token = "your_secret_key_should_be_long_enough_at_least_512_bits_long_to_secure_the_token";
+    private readonly ILogger<JwtValidator> _logger;
 
+    
+    public JwtValidator(ILogger<JwtValidator> logger)
+    {
+        _logger = logger;
+    }
+    
     public AuthResult CreateJwtToken(List<Claim> claims)
     {
         var expiration = 15 * 60; // 15 minutes
+        _logger.LogInformation("Creating JWT token with expiration {Expiration} seconds", expiration);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -25,6 +33,7 @@ public class JwtValidator : IJwtValidator
         var token = tokenHandler.CreateToken(tokenDescriptor);
         var refreshToken = CreateRefreshToken();
         
+        _logger.LogInformation("JWT token created successfully with refresh token");
         return new AuthResult
         {
             Token = tokenHandler.WriteToken(token),
@@ -35,7 +44,9 @@ public class JwtValidator : IJwtValidator
 
     public string CreateRefreshToken()
     {
-        return Guid.NewGuid().ToString();
+        var refreshToken = Guid.NewGuid().ToString();
+        _logger.LogInformation("Generated new refresh token");
+        return refreshToken;
     }
 
     public static TokenValidationParameters CreateTokenValidationParameters()

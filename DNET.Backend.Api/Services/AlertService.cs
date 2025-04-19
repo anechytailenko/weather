@@ -17,19 +17,20 @@ public class AlertService: IAlertService
     private readonly WeatherAppDbContext _context;
     private readonly IMapper _mapper;
     private readonly AlertServiceOptions _alertServiceOptions;
+    private readonly ILogger<AlertService> _logger;
 
-    public AlertService(WeatherAppDbContext context, IMapper mapper, IOptionsSnapshot<AlertServiceOptions> alertServiceSettings)
+    public AlertService(WeatherAppDbContext context, IMapper mapper, IOptionsSnapshot<AlertServiceOptions> alertServiceSettings, ILogger<AlertService> logger)
     {
         _context = context;
         _mapper = mapper;
         _alertServiceOptions = alertServiceSettings.Value;
-        
+        _logger = logger;
     }
 
     
     public async Task<List<AlertDTO>> GetAllAlert()
     {
-        
+        _logger.LogInformation("Retrieving all alerts.");
         return await _context.Alert
             .Include(a => a.AlertLocations)
             .ThenInclude(al => al.Location)
@@ -40,6 +41,7 @@ public class AlertService: IAlertService
    
     public async Task<AlertDTO?> GetAlertById(int id)
     {
+        _logger.LogInformation("Retrieving alert by ID: {AlertId}", id);
         return await _context.Alert
             .Include(a => a.AlertLocations)
             .ThenInclude(al => al.Location)
@@ -51,9 +53,12 @@ public class AlertService: IAlertService
     
     public async Task<AlertDTO?> CreateAlert(CreateAlertDTO createAlertDto)
     {
+        _logger.LogInformation("Creating new alert.");
+        
         var countOfRecords = await _context.Alert.CountAsync();
         if (countOfRecords >= _alertServiceOptions.MaxAlerts)
         {
+            _logger.LogWarning("Alert creation was terminated. Max alerts limit ({MaxAlerts}) reached.", _alertServiceOptions.MaxAlerts);
             return null; 
         }
         
@@ -71,6 +76,9 @@ public class AlertService: IAlertService
                 {
                     Location = location,
                 });
+            }else
+            {
+                _logger.LogWarning("Location ID {LocationId} not found during alert creation.", locationId);
             }
         }
         
@@ -84,6 +92,8 @@ public class AlertService: IAlertService
     
     public async Task<AlertDTO?> UpdateEntirelyAlert(int id, CreateAlertDTO updateAlertDto)
     {
+        _logger.LogInformation("Updating alert with ID: {AlertId}", id);
+
         
         var alert = await _context.Alert
             .Include(a => a.AlertLocations)
@@ -92,6 +102,7 @@ public class AlertService: IAlertService
 
         if (alert == null)
         {
+            _logger.LogWarning("Alert with ID {AlertId} was not found during update.", id);
             return null;
         }
 
@@ -109,6 +120,10 @@ public class AlertService: IAlertService
                 {
                     Location = location,
                 });
+            } 
+            else
+            {
+                _logger.LogWarning("Location ID {LocationId} was not found during update.", locationId);
             }
         }
         
@@ -120,14 +135,24 @@ public class AlertService: IAlertService
     
     public async Task<bool> DeleteAlertById(int id)
     {
-        if (_alertServiceOptions.EnableDelete == false) return false;
+        _logger.LogInformation("Deleting alert by ID: {AlertId}", id);
+        
+        if (!_alertServiceOptions.EnableDelete)
+        {
+            _logger.LogWarning("Alert deletion is disabled by configuration.");
+            return false;
+        }
+        
         var alert = await _context.Alert.FindAsync(id);
 
         if (alert == null)
         {
+            _logger.LogWarning("Alert with ID {AlertId} was not found during deletion.", id);
             return false;
         }
-
+        
+        _logger.LogInformation("Alert with ID {AlertId} deleted successfully.", id);
+        
         _context.Alert.Remove(alert);
         await _context.SaveChangesAsync();
 

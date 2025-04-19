@@ -6,6 +6,7 @@ using DNET.Backend.Api.DTOs;
 using DNET.Backend.Api.Options;
 using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DNET.Backend.Api.Tests
 {   
@@ -16,6 +17,7 @@ namespace DNET.Backend.Api.Tests
         private  Mock<IOptionsSnapshot<LocationServiceOptions>> _mockLocationServiceSettings;
         private IMapper _mapper;
         private WeatherAppDbContext _context;
+        private Mock<ILogger<LocationService>> _mockLogger;
 
         public async Task InitializeAsync()
         {
@@ -23,7 +25,8 @@ namespace DNET.Backend.Api.Tests
             _mockLocationServiceSettings.Setup(s => s.Value).Returns(new LocationServiceOptions { MaxLocations = 50 , EnableDelete = false });
             _mapper = Utils.Get();
             _context = Utils.CreateInMemoryDatabaseContext();
-            _locationService = new LocationService(_context, _mapper, _mockLocationServiceSettings.Object);
+            _mockLogger = new Mock<ILogger<LocationService>>();
+            _locationService = new LocationService(_context, _mapper, _mockLocationServiceSettings.Object,_mockLogger.Object);
 
             await InsertMockData();
         }
@@ -77,7 +80,7 @@ namespace DNET.Backend.Api.Tests
             int amountOfRecord = await _context.Location.CountAsync();
             
             _mockLocationServiceSettings.Setup(s => s.Value).Returns(new LocationServiceOptions { MaxLocations = amountOfRecord + 2 , EnableDelete = false });
-            _locationService = new LocationService(Utils.CreateInMemoryDatabaseContext(),_mapper, _mockLocationServiceSettings.Object);
+            _locationService = new LocationService(Utils.CreateInMemoryDatabaseContext(),_mapper, _mockLocationServiceSettings.Object,_mockLogger.Object);
             
             var location = new CreateLocationDTO {City  = "City 4", Country = "Country 4", AlertIds = new List<int>{1,4}};
             
@@ -92,7 +95,7 @@ namespace DNET.Backend.Api.Tests
             int amountOfRecord = await _context.Location.CountAsync();
             
             _mockLocationServiceSettings.Setup(s => s.Value).Returns(new LocationServiceOptions { MaxLocations = 0 , EnableDelete = false }); 
-            _locationService = new LocationService(Utils.CreateInMemoryDatabaseContext(),_mapper, _mockLocationServiceSettings.Object);
+            _locationService = new LocationService(Utils.CreateInMemoryDatabaseContext(),_mapper, _mockLocationServiceSettings.Object,_mockLogger.Object);
             
             var location = new CreateLocationDTO{City  = "City 5", Country = "Country 5", AlertIds = new List<int>{4,5}};
             
@@ -126,7 +129,7 @@ namespace DNET.Backend.Api.Tests
             int amountOfRecord = (await _locationService.GetAllLocations()).Count();
             
             _mockLocationServiceSettings.Setup(s => s.Value).Returns(new LocationServiceOptions { MaxLocations = amountOfRecord + 2 , EnableDelete = true });
-            _locationService = new LocationService(Utils.CreateInMemoryDatabaseContext(),_mapper, _mockLocationServiceSettings.Object);
+            _locationService = new LocationService(Utils.CreateInMemoryDatabaseContext(),_mapper, _mockLocationServiceSettings.Object,_mockLogger.Object);
             var location = new CreateLocationDTO{City  = "City 8", Country = "Country 8", AlertIds = new List<int>{2,6}};
             var createdAlert = await _locationService.CreateLocation(location);
             

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -20,12 +21,13 @@ namespace DNET.Backend.Api.Tests.Filters
         private readonly ActionContext _actionContext;
         private readonly ActionExecutingContext _executingContext;
         private readonly ActionExecutionDelegate _next;
+        private Mock<ILogger<ApiKeyFilter>> _mockLogger;
 
         public ApiKeyFilterTests()
         {
             _optionMock = new Mock<IOptionsSnapshot<ApiKeyOptions>>();
-            
-            _filter = new ApiKeyFilter(_optionMock.Object);
+            _mockLogger = new Mock<ILogger<ApiKeyFilter>>();
+            _filter = new ApiKeyFilter(_optionMock.Object,_mockLogger.Object);
             
             var httpContext = new DefaultHttpContext();
             

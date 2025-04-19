@@ -6,16 +6,23 @@ namespace DNET.Backend.Api.Filters;
 
 public class EtagFilter : ResultFilterAttribute
 {
+    private readonly ILogger<EtagFilter> _logger;
+    
+    public EtagFilter(ILogger<EtagFilter> logger)
+    {
+        _logger = logger;
+    }
     public override void OnResultExecuting(ResultExecutingContext context)
     {
         var etag = GenerateETag(context.Result);
 
         if (context.HttpContext.Request.Headers.TryGetValue("If-None-Match", out var value) && value.ToString() == etag)
         {
+            _logger.LogInformation("ETag match for {Path}. Returned: Status 304 Not Modified.", context.HttpContext.Request.Path);
             context.Result = new StatusCodeResult(StatusCodes.Status304NotModified);
             return;
         }
-        
+        _logger.LogDebug("Generating new ETag for {Path}: {ETag}", context.HttpContext.Request.Path, etag);
         context.HttpContext.Response.Headers.Append("ETag", etag);
     }
     

@@ -7,6 +7,7 @@ using DNET.Backend.Api.Options;
 using DNET.Backend.Api.Profiles;
 using DNET.Backend.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DNET.Backend.Api.Tests
 {   
@@ -18,6 +19,7 @@ namespace DNET.Backend.Api.Tests
         private  Mock<IOptionsSnapshot<AlertServiceOptions>> _mockAlertServiceSettings;
         private IMapper _mapper;
         private WeatherAppDbContext _context;
+        private Mock<ILogger<AlertService>> _mockLogger;
 
         public async Task InitializeAsync()
         {
@@ -25,8 +27,9 @@ namespace DNET.Backend.Api.Tests
             _mockAlertServiceSettings.Setup(s => s.Value).Returns(new AlertServiceOptions { MaxAlerts = 50 , EnableDelete = false });
             _mapper = Utils.Get();
             _context = Utils.CreateInMemoryDatabaseContext();
+            _mockLogger = new Mock<ILogger<AlertService>>();
             
-            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object);
+            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object,_mockLogger.Object);
 
             await InsertMockData();
         }
@@ -82,7 +85,7 @@ namespace DNET.Backend.Api.Tests
             int amountOfRecord = await _context.Alert.CountAsync();
             
             _mockAlertServiceSettings.Setup(s => s.Value).Returns(new AlertServiceOptions { MaxAlerts = amountOfRecord + 2 , EnableDelete = false });
-            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object);
+            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object,_mockLogger.Object);
 
             var alert = new CreateAlertDTO { Message = "Alert 4", IssuedAt = DateTime.Now.AddHours(-4), LocationIds = new List<int> { } };
             
@@ -96,7 +99,7 @@ namespace DNET.Backend.Api.Tests
         {
             
             _mockAlertServiceSettings.Setup(s => s.Value).Returns(new AlertServiceOptions { MaxAlerts = 0 , EnableDelete = false }); 
-            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object);
+            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object,_mockLogger.Object);
             
             var alert = new CreateAlertDTO { Message = "Alert 5", IssuedAt = DateTime.Now.AddHours(-4), LocationIds = new List<int> {  } };
             
@@ -130,7 +133,7 @@ namespace DNET.Backend.Api.Tests
             int amountOfRecord = await _context.Alert.CountAsync();
             
             _mockAlertServiceSettings.Setup(s => s.Value).Returns(new AlertServiceOptions { MaxAlerts = amountOfRecord + 2 , EnableDelete = true });
-            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object);
+            _alertService = new AlertService(_context,_mapper, _mockAlertServiceSettings.Object,_mockLogger.Object);
             var alert =new CreateAlertDTO { Message = "Alert 12", IssuedAt = DateTime.Now.AddHours(-4), LocationIds = new List<int> { } };
             var createdAlert = await _alertService.CreateAlert(alert);
 
