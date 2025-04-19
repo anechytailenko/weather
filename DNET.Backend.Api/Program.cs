@@ -25,7 +25,7 @@ builder.Services.AddScoped<RateLimitMiddleware>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(options => 
+builder.Services.AddDbContext<WeatherAppDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("ProductDb")));
 
 builder.Services.AddStackExchangeRedisCache(options =>
