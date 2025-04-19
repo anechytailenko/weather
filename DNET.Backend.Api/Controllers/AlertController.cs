@@ -50,7 +50,9 @@ namespace DNET.Backend.Api.Controllers
 
         
         [HttpGet("{id}")]
+
         [TypeFilter(typeof(EtagFilter))]
+
         [Authorize(Policy = "RequireUser")] 
         [AllowAnonymous]
         public async Task<IActionResult> GetAlertById(int id)
