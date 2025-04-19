@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: weather-api
-    env: dotnet
-    buildCommand: dotnet publish -c Release -o out
-    startCommand: dotnet out/WeatherAspNetApp.dll
-    envVars:
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
